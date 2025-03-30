@@ -1,0 +1,35 @@
+name: Run Instagram Bot
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "*/10 * * * *" # ✅ Her 10 min me run karega
+  workflow_dispatch: # ✅ Manually bhi start kar sakta hai
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Setup Instagram Credentials
+        run: |
+          echo "INSTA_USERNAME=${{ secrets.INSTA_USERNAME }}" >> .env
+          echo "INSTA_PASSWORD=${{ secrets.INSTA_PASSWORD }}" >> .env
+          echo "GROUP_THREAD_ID=${{ secrets.GROUP_THREAD_ID }}" >> .env
+          echo "ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}" >> .env
+
+      - name: Run Instagram Bot
+        run: python simpcitybot.py
