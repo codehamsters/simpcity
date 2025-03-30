@@ -45,10 +45,10 @@ def mention_all():
     
     for i in range(0, len(members), batch_size):
         batch = members[i:i+batch_size]
-        mentions = [{"user_id": user_id, "offset": 0, "length": 0} for user_id, _ in batch]
         message_text = " ".join([f"@{username}" for _, username in batch])
 
-        cl.direct_threads.send_text(GROUP_THREAD_ID, message_text, mentions=mentions)
+        cl.direct_send(text=message_text, thread_ids=[GROUP_THREAD_ID])
+        # ✅ Send message to group thread)
         print(f"✅ Mentioned {len(batch)} members: {message_text}")
 
         time.sleep(2)  # ✅ Delay to avoid rate limit
@@ -89,7 +89,7 @@ while True:
     for member_id in new_member_ids:
         username = current_members[member_id]  # Fetch username from dictionary
         message = random.choice(WELCOME_MESSAGES).replace("{username}", username)
-        cl.direct_thread.send_text(text=message, thread_ids=[GROUP_THREAD_ID], mentions=[{"user_id": member_id, "offset": 0, "length": len(username)}])
+        cl.direct_send(text=message, thread_ids=[GROUP_THREAD_ID])
         print(f"✅ Welcomed {username} in group chat!")
 
     previous_members = current_members  # Update members list
