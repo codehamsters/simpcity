@@ -1,13 +1,15 @@
 import time
 import random
+import os
 from instagrapi import Client
+from dotenv import load_dotenv
 
-# Instagram Credentials
-USERNAME = "simpcity.bot"
-PASSWORD = "Rohan@1702$Insta"
+# Load secret variables from .env file
+load_dotenv()
 
-# Group Chat Thread ID (Find using API or DevTools)
-GROUP_THREAD_ID = "26822505924062792"
+USERNAME = os.getenv("INSTA_USERNAME")
+PASSWORD = os.getenv("INSTA_PASSWORD")
+GROUP_THREAD_ID = os.getenv("GROUP_THREAD_ID")
 
 # Welcome Messages List
 WELCOME_MESSAGES = [
@@ -49,5 +51,5 @@ while True:
 
     previous_members = current_members  # Update members list
 
-    # Check every 5 minutes
+    # Check every 10 seconds
     time.sleep(10)
