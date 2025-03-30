@@ -2,9 +2,7 @@ import time
 import random
 from instagrapi import Client
 
-# Instagram Credentials
-USERNAME = "simpcity.bot"
-PASSWORD = "Rohan@1702$Insta"
+
 
 # Group Chat Thread ID (Find using API or DevTools)
 GROUP_THREAD_ID = "26822505924062792"
