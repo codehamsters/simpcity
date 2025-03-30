@@ -60,7 +60,9 @@ def check_messages():
 
         if messages:
             latest_message = messages[0]
-            sender_username = latest_message.user.username  # Sender ka username
+            sender_id = latest_message.user_id  # ✅ `user` ki jagah `user_id` use karna hai
+            sender_username = cl.user_info(sender_id).username  # ✅ Username fetch karo
+            
             text = latest_message.text.lower().strip()
 
             if text == "mention all":
