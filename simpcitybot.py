@@ -98,7 +98,6 @@ def check_messages():
 previous_members = get_group_members()
 
 while True:
-    check_messages()
     current_members = get_group_members()
     
     # Detect new members
@@ -113,4 +112,4 @@ while True:
     previous_members = current_members  # Update members list
 
     # Check every 5 seconds
-    time.sleep(5)
+    time.sleep(10)
