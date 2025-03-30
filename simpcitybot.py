@@ -89,7 +89,7 @@ while True:
     for member_id in new_member_ids:
         username = current_members[member_id]  # Fetch username from dictionary
         message = random.choice(WELCOME_MESSAGES).replace("{username}", username)
-        cl.direct_send(text=message, thread_ids=[GROUP_THREAD_ID])
+        cl.direct_send(text=message, thread_ids=[GROUP_THREAD_ID], mentions=[{"user_id": member_id, "offset": 0, "length": len(username)}])
         print(f"✅ Welcomed {username} in group chat!")
 
     previous_members = current_members  # Update members list
