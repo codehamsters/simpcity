@@ -24,32 +24,57 @@ cl = Client()
 cl.login(USERNAME, PASSWORD)
 
 def get_group_members():
-    """Fetch current group members"""
+    """Fetch group members and return as dictionary"""
     try:
         group_info = cl.direct_thread(GROUP_THREAD_ID)
-        return set(user.pk for user in group_info.users)
+        members = {user.pk: user.username for user in group_info.users}
+        print("🟢 Current Group Members:", members)  # Debugging line
+        return members
     except Exception as e:
         print(f"❌ Error fetching group members: {e}")
-        return set()
+        return {}
+    
+def mention_all():
+    """Mentions all group members"""
+    members = get_group_members()
+    if not members:
+        return "⚠ No members found!"
+    
+    mentions = " ".join([f"@{username}" for username in members.values()])
+    message = f"🚀 Mentioning everyone: {mentions}"
+    
+    cl.direct_send(text=message, thread_ids=[GROUP_THREAD_ID])
+    print(f"✅ Mentioned all members: {mentions}")
+
+def check_messages():
+    """Checks latest group messages & triggers mention if needed"""
+    try:
+        messages = cl.direct_messages(GROUP_THREAD_ID)
+        latest_message = messages[0].text.lower() if messages else ""
+
+        if "mention all" in latest_message:
+            mention_all()
+
+    except Exception as e:
+        print(f"❌ Error checking messages: {e}")
 
 # Track previous members
 previous_members = get_group_members()
 
 while True:
+    check_messages()
     current_members = get_group_members()
     
     # Detect new members
-    new_members = current_members - previous_members
+    new_member_ids = set(current_members.keys()) - set(previous_members.keys())
 
-    for member_id in new_members:
-        user_info = cl.user_info(member_id)
-        username = user_info.username
+    for member_id in new_member_ids:
+        username = current_members[member_id]  # Fetch username from dictionary
         message = random.choice(WELCOME_MESSAGES).replace("{username}", username)
-
         cl.direct_send(text=message, thread_ids=[GROUP_THREAD_ID])
         print(f"✅ Welcomed {username} in group chat!")
 
     previous_members = current_members  # Update members list
 
     # Check every 10 seconds
-    time.sleep(10)
+    time.sleep(5)
