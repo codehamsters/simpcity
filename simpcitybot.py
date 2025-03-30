@@ -1,48 +1,64 @@
 import time
 import random
 import os
+import pickle  # ✅ Session Save ke liye
 from instagrapi import Client
 from dotenv import load_dotenv
 
-# Load secret variables from .env file
+# Load secret variables
 load_dotenv()
-
 USERNAME = os.getenv("INSTA_USERNAME")
 PASSWORD = os.getenv("INSTA_PASSWORD")
 GROUP_THREAD_ID = os.getenv("GROUP_THREAD_ID")
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")  # 👈 Sirf tu use kar sake
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")
 
-# Welcome Messages List
-WELCOME_MESSAGES = [
-    "Welcome @{username} to SimpCity! 🚀🔥",
-    "Aree bhai! Ek aur simp aaya! 😆 Welcome @{username}! 🎉",
-    "@{username} just entered the simp zone. Buckle up! 😂",
-    "Ek naye simp ki entry hui hai! @{username}, welcome bhai! 💀🔥"
-]
+SESSION_FILE = "session.pkl"  # ✅ Session file ka naam
 
-# Login to Instagram
+# Initialize Instagram Client
 cl = Client()
-cl.login(USERNAME, PASSWORD)
+
+def login():
+    """Login with session or credentials"""
+    if os.path.exists(SESSION_FILE):
+        print("🔄 Loading saved session...")
+        try:
+            with open(SESSION_FILE, "rb") as f:
+                session = pickle.load(f)
+            cl.load_settings(session)  # ✅ Session load karega
+            cl.relogin()  # ✅ Session se relogin
+            print("✅ Logged in using session!")
+            return
+        except Exception as e:
+            print(f"⚠ Session load failed: {e}, logging in again...")
+
+    # Agar session fail ho gaya to normal login
+    print("🔑 Logging in with username/password...")
+    cl.login(USERNAME, PASSWORD)
+
+    # ✅ Save session after login
+    with open(SESSION_FILE, "wb") as f:
+        pickle.dump(cl.get_settings(), f)
+    print("✅ Session saved!")
+
+# Login with session or credentials
+login()
 
 def get_group_members():
     """Fetch group members and return as dictionary"""
     try:
         group_info = cl.direct_thread(GROUP_THREAD_ID)
-        members = {user.pk: user.username for user in group_info.users}
-        return members
+        return {user.pk: user.username for user in group_info.users}
     except Exception as e:
         print(f"❌ Error fetching group members: {e}")
         return {}
 
 def mention_all():
     """Mentions all group members in batches (avoiding length limit)"""
-    members = list(get_group_members().items())  # Convert dict to list of tuples
-    
+    members = list(get_group_members().items())
     if not members:
         return "⚠ No members found!"
 
     batch_size = 5  # ✅ 5 members per message (length limit avoid)
-    
     for i in range(0, len(members), batch_size):
         batch = members[i:i+batch_size]
         mentions = [{"user_id": user_id, "offset": 0, "length": 0} for user_id, _ in batch]
@@ -50,7 +66,6 @@ def mention_all():
 
         cl.direct_send(text=message_text, thread_ids=[GROUP_THREAD_ID], mentions=mentions)
         print(f"✅ Mentioned {len(batch)} members: {message_text}")
-
         time.sleep(2)  # ✅ Delay to avoid rate limit
 
 def check_messages():
@@ -60,9 +75,9 @@ def check_messages():
 
         if messages:
             latest_message = messages[0]
-            sender_id = latest_message.user_id  # ✅ `user` ki jagah `user_id` use karna hai
-            sender_username = cl.user_info(sender_id).username  # ✅ Username fetch karo
-            
+            sender_id = latest_message.user_id
+            sender_username = cl.user_info(sender_id).username
+
             text = latest_message.text.lower().strip()
 
             if text == "mention all":
@@ -87,12 +102,15 @@ while True:
     new_member_ids = set(current_members.keys()) - set(previous_members.keys())
 
     for member_id in new_member_ids:
-        username = current_members[member_id]  # Fetch username from dictionary
-        message = random.choice(WELCOME_MESSAGES).replace("{username}", username)
+        username = current_members[member_id]
+        message = random.choice([
+            "Welcome @{username} to SimpCity! 🚀🔥",
+            "Aree bhai! Ek aur simp aaya! 😆 Welcome @{username}! 🎉",
+            "@{username} just entered the simp zone. Buckle up! 😂",
+            "Ek naye simp ki entry hui hai! @{username}, welcome bhai! 💀🔥"
+        ]).replace("{username}", username)
         cl.direct_send(text=message, thread_ids=[GROUP_THREAD_ID])
         print(f"✅ Welcomed {username} in group chat!")
 
-    previous_members = current_members  # Update members list
-
-    # Check every 5 seconds
+    previous_members = current_members
     time.sleep(5)
