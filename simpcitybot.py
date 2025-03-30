@@ -10,6 +10,7 @@ load_dotenv()
 USERNAME = os.getenv("INSTA_USERNAME")
 PASSWORD = os.getenv("INSTA_PASSWORD")
 GROUP_THREAD_ID = os.getenv("GROUP_THREAD_ID")
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")  # 👈 Sirf tu use kar sake
 
 # Welcome Messages List
 WELCOME_MESSAGES = [
@@ -28,32 +29,47 @@ def get_group_members():
     try:
         group_info = cl.direct_thread(GROUP_THREAD_ID)
         members = {user.pk: user.username for user in group_info.users}
-        print("🟢 Current Group Members:", members)  # Debugging line
         return members
     except Exception as e:
         print(f"❌ Error fetching group members: {e}")
         return {}
-    
+
 def mention_all():
-    """Mentions all group members"""
-    members = get_group_members()
+    """Mentions all group members in batches (avoiding length limit)"""
+    members = list(get_group_members().items())  # Convert dict to list of tuples
+    
     if not members:
         return "⚠ No members found!"
+
+    batch_size = 5  # ✅ 5 members per message (length limit avoid)
     
-    mentions = " ".join([f"@{username}" for username in members.values()])
-    message = f"🚀 Mentioning everyone: {mentions}"
-    
-    cl.direct_send(text=message, thread_ids=[GROUP_THREAD_ID])
-    print(f"✅ Mentioned all members: {mentions}")
+    for i in range(0, len(members), batch_size):
+        batch = members[i:i+batch_size]
+        mentions = [{"user_id": user_id, "offset": 0, "length": 0} for user_id, _ in batch]
+        message_text = " ".join([f"@{username}" for _, username in batch])
+
+        cl.direct_send(text=message_text, thread_ids=[GROUP_THREAD_ID], mentions=mentions)
+        print(f"✅ Mentioned {len(batch)} members: {message_text}")
+
+        time.sleep(2)  # ✅ Delay to avoid rate limit
 
 def check_messages():
     """Checks latest group messages & triggers mention if needed"""
     try:
         messages = cl.direct_messages(GROUP_THREAD_ID)
-        latest_message = messages[0].text.lower() if messages else ""
 
-        if "mention all" in latest_message:
-            mention_all()
+        if messages:
+            latest_message = messages[0]
+            sender_username = latest_message.user.username  # Sender ka username
+            text = latest_message.text.lower().strip()
+
+            if text == "mention all":
+                if sender_username == ADMIN_USERNAME:
+                    print("✅ Admin ne mention all command diya!")
+                    mention_all()
+                else:
+                    cl.direct_send(text="❌ Bhai tu admin nahi hai!", thread_ids=[GROUP_THREAD_ID])
+                    print(f"🚫 {sender_username} tried to use mention all.")
 
     except Exception as e:
         print(f"❌ Error checking messages: {e}")
@@ -76,5 +92,5 @@ while True:
 
     previous_members = current_members  # Update members list
 
-    # Check every 10 seconds
+    # Check every 5 seconds
     time.sleep(5)
