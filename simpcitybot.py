@@ -53,47 +53,6 @@ def get_group_members():
         print(f"❌ Error fetching group members: {e}")
         return {}
 
-def mention_all():
-    """Mentions all group members in batches (avoiding length limit)"""
-    members = list(get_group_members().items())  # Convert dict to list of tuples
-    
-    if not members:
-        return "⚠ No members found!"
-
-    batch_size = 5  # ✅ 5 members per message (length limit avoid)
-    
-    for i in range(0, len(members), batch_size):
-        batch = members[i:i+batch_size]
-        message_text = " ".join([f"@{username}" for _, username in batch])
-
-        cl.direct_send(text=message_text, thread_ids=[GROUP_THREAD_ID])
-        print(f"✅ Mentioned {len(batch)} members: {message_text}")
-
-        time.sleep(2)  # ✅ Delay to avoid rate limit
-
-def check_messages():
-    """Checks latest group messages & triggers mention if needed"""
-    try:
-        messages = cl.direct_messages(GROUP_THREAD_ID)
-
-        if messages:
-            latest_message = messages[0]
-            sender_id = latest_message.user_id  
-            sender_username = cl.user_info(sender_id).username  
-            
-            text = latest_message.text.lower().strip()
-
-            if text == "mention all":
-                if sender_username == ADMIN_USERNAME:
-                    print("✅ Admin ne mention all command diya!")
-                    mention_all()
-                else:
-                    cl.direct_send(text="❌ Bhai tu admin nahi hai!", thread_ids=[GROUP_THREAD_ID])
-                    print(f"🚫 {sender_username} tried to use mention all.")
-
-    except Exception as e:
-        print(f"❌ Error checking messages: {e}")
-
 # Track previous members
 previous_members = get_group_members()
 
@@ -112,4 +71,4 @@ while True:
     previous_members = current_members  # Update members list
 
     # Check every 5 seconds
-    time.sleep(10)
+    time.sleep(300)
