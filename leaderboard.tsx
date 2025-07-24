@@ -94,14 +94,14 @@ export default function Component() {
               className="h-20 rounded-full w-auto"
             />
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-[#ff6600] to-[#ff4da6] bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold bg-[#ff6600] bg-clip-text text-transparent">
             SimpCity
           </h1>
         </div>
 
         {/* Promo to join SimpCity */}
         <div className="mb-6 flex justify-center">
-          <div className="bg-gradient-to-r from-[#ff6600] to-[#ff4da6] rounded-xl px-6 py-4 shadow-lg flex items-center gap-4">
+          <div className="bg-[#ff6600] rounded-xl px-6 py-4 shadow-lg flex items-center gap-4">
             <span className="text-white text-lg font-semibold">
               Want to see your name here?
             </span>
@@ -109,7 +109,7 @@ export default function Component() {
               href="https://ig.me/j/Aba9tGznTZrZ7RY8"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-black text-white font-bold px-4 py-2 rounded-lg border-2 border-white hover:bg-[#ff6600] hover:text-black transition"
+              className="bg-black text-white font-bold px-4 py-2 rounded-lg border-2 border-white hover:bg-[#ff4da6] hover:text-black transition"
             >
               Join SimpCity
             </a>
@@ -119,7 +119,7 @@ export default function Component() {
         {/* Leaderboard Title */}
         <div className="text-center mb-4">
           <h2 className="text-3xl font-bold text-white mb-2">Top Simps</h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-[#ff6600] to-[#ff4da6] mx-auto rounded-full" />
+          <div className="w-24 h-1 bg-[#ff6600] mx-auto rounded-full" />
         </div>
 
         {/* Not realtime note */}
@@ -152,57 +152,68 @@ export default function Component() {
                     key={user.userId}
                     className="bg-gray-900/80 border-gray-700 hover:border-[#ff6600] transition-all duration-300 hover:shadow-lg hover:shadow-[#ff6600]/20 backdrop-blur-sm"
                   >
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-4">
-                        {/* Rank */}
-                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-gray-800 to-gray-700 border-2 border-gray-600">
-                          <span className="text-xl font-bold text-white">
-                            #{index + 1}
-                          </span>
-                        </div>
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                        {/* Mobile: Top row with rank, profile, and basic info */}
+                        <div className="flex items-center gap-3 sm:gap-4">
+                          {/* Rank */}
+                          <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-gray-800 to-gray-700 border-2 border-gray-600 flex-shrink-0">
+                            <span className="text-lg sm:text-xl font-bold text-white">
+                              #{index + 1}
+                            </span>
+                          </div>
 
-                        {/* Rank Icon */}
-                        <div className="flex-shrink-0">
-                          {getRankIcon(index + 1)}
-                        </div>
+                          {/* Rank Icon */}
+                          <div className="flex-shrink-0 hidden sm:block">
+                            {getRankIcon(index + 1)}
+                          </div>
 
-                        {/* Profile Picture */}
-                        <div className="relative">
-                          <img
-                            src={user.profilePic || "/placeholder.svg"}
-                            alt={user.username}
-                            className="w-16 h-16 rounded-full border-3 border-[#ff6600] shadow-lg shadow-[#ff6600]/30"
-                          />
-                          <div className="absolute -bottom-1 -right-1 bg-[#ff4da6] text-white text-xs font-bold px-2 py-1 rounded-full">
-                            {level}
+                          {/* Profile Picture */}
+                          <div className="relative flex-shrink-0">
+                            <img
+                              src={user.profilePic}
+                              alt={user.username}
+                              className="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 sm:border-3 border-[#ff6600] shadow-lg shadow-[#ff6600]/30"
+                            />
+                            <div className="absolute -bottom-1 -right-1 bg-[#ff4da6] text-white text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full">
+                              {level}
+                            </div>
+                          </div>
+
+                          {/* User Info - Mobile optimized */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                              <a
+                                className="text-lg sm:text-xl font-bold text-white truncate underline hover:text-[#ff6600]"
+                                href={`https://www.instagram.com/${user.username}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={`View ${user.username}'s profile on Instagram`}
+                              >
+                                @{user.username}
+                              </a>
+                              <div className="flex items-center gap-2">
+                                <div className="sm:hidden">
+                                  {getRankIcon(index + 1)}
+                                </div>
+                                <Badge
+                                  variant="outline"
+                                  className="border-[#ff6600] text-[#ff6600] text-xs"
+                                >
+                                  Level {level}
+                                </Badge>
+                              </div>
+                            </div>
+                            <p className="text-[#ff4da6] font-semibold text-sm sm:text-base">
+                              XP: {user.count.toLocaleString()}
+                            </p>
                           </div>
                         </div>
 
-                        {/* User Info */}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <a
-                              className="text-xl font-bold text-white underline hover:text-[#ff6600] transition-colors duration-300"
-                              href={`https://instagram.com/${user.username}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              @{user.username}
-                            </a>
-                            <Badge
-                              variant="outline"
-                              className="border-[#ff6600] text-[#ff6600]"
-                            >
-                              Level {level}
-                            </Badge>
-                          </div>
-                          <p className="text-[#ff4da6] font-semibold mb-2">
-                            XP: {user.count.toLocaleString()}
-                          </p>
-
-                          {/* XP Progress Bar */}
+                        {/* XP Progress Bar - Full width on mobile */}
+                        <div className="w-full sm:w-48 sm:flex-shrink-0">
                           <div className="relative">
-                            <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+                            <div className="w-full bg-gray-700 rounded-full h-2 sm:h-3 overflow-hidden">
                               <div
                                 className="h-full bg-gradient-to-r from-[#ff6600] to-[#ff4da6] rounded-full transition-all duration-1000 ease-out relative"
                                 style={{ width: `${progress}%` }}
