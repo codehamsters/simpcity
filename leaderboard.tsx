@@ -48,7 +48,6 @@ export default function Component() {
         const response = await fetch("/api/leaderboard");
         if (!response.ok) throw new Error("Failed to fetch leaderboard data");
         const data = await response.json();
-        console.log(data);
         // If your API returns lastUpdated as a property, use it. Otherwise, get it from the first item.
         let updatedAt = null;
         if (Array.isArray(data) && data.length > 0) {
