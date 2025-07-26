@@ -1,7 +1,5 @@
-"use client"
-
-import Component from "../leaderboard"
+import LeaderboardServer from "@/components/leaderboard-server";
 
 export default function Page() {
-  return <Component />
+  return <LeaderboardServer />;
 }

@@ -8,9 +8,14 @@ import {
   supabase,
   type LeaderboardEntry,
   type CurrentMember,
-} from "./lib/supabase";
+} from "@/lib/supabase";
 
-// Level calculation function
+interface LeaderboardClientProps {
+  initialLeaderboardData: LeaderboardEntry[];
+  initialCurrentMembersData: CurrentMember[];
+  initialTotalCount: number;
+}
+
 function calculateLevel(xp: number) {
   let level = 1;
   let requiredXP = 100;
@@ -19,7 +24,7 @@ function calculateLevel(xp: number) {
   while (xp >= totalXP + requiredXP) {
     totalXP += requiredXP;
     level++;
-    requiredXP = Math.floor(requiredXP * 1.5); // Each level requires 50% more XP
+    requiredXP = Math.floor(requiredXP * 1.5);
   }
 
   const currentLevelXP = xp - totalXP;
@@ -42,62 +47,41 @@ function getRankIcon(position: number) {
   }
 }
 
-export default function Component() {
+export default function LeaderboardClient({
+  initialLeaderboardData,
+  initialCurrentMembersData,
+  initialTotalCount,
+}: LeaderboardClientProps) {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>(
-    []
+    initialLeaderboardData
   );
   const [currentMembersData, setCurrentMembersData] = useState<CurrentMember[]>(
-    []
+    initialCurrentMembersData
   );
-  const [totalCount, setTotalCount] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState<number>(initialTotalCount);
+  const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const [showCurrentMembers, setShowCurrentMembers] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(
+    initialLeaderboardData.length > 0
+      ? initialLeaderboardData[0].updated_at
+      : null
+  );
+  const [showCurrentMembers, setShowCurrentMembers] = useState(true);
 
-  // Separate pagination states for each view
   const [leaderboardPage, setLeaderboardPage] = useState(0);
   const [currentMembersPage, setCurrentMembersPage] = useState(0);
   const [leaderboardHasMore, setLeaderboardHasMore] = useState(true);
   const [currentMembersHasMore, setCurrentMembersHasMore] = useState(true);
 
-  // Track loaded user IDs to prevent duplicates
   const [loadedLeaderboardIds, setLoadedLeaderboardIds] = useState<Set<string>>(
-    new Set()
+    new Set(initialLeaderboardData.map((item) => item.userid))
   );
   const [loadedCurrentMemberIds, setLoadedCurrentMemberIds] = useState<
     Set<string>
-  >(new Set());
+  >(new Set(initialCurrentMembersData.map((item) => item.userid)));
 
   const ITEMS_PER_PAGE = 20;
 
-  // Fetch stats data
-  async function fetchStats() {
-    try {
-      const { data, error } = await supabase
-        .from("stats")
-        .select("value")
-        .eq("key", "total_count")
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching stats:", error);
-        return 0;
-      }
-
-      if (!data) {
-        console.warn("No total_count found in stats table");
-        return 0;
-      }
-
-      return data.value || 0;
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-      return 0;
-    }
-  }
-
-  // Deduplicate data based on userid
   function deduplicateData<T extends { userid: string }>(
     existingData: T[],
     newData: T[],
@@ -109,12 +93,11 @@ export default function Component() {
     return [...existingData, ...filteredNewData];
   }
 
-  // Fetch leaderboard data with pagination
   async function fetchLeaderboardData(page = 0, append = false) {
     try {
       if (page === 0 && !append) {
         setLoading(true);
-        setLoadedLeaderboardIds(new Set()); // Reset loaded IDs when starting fresh
+        setLoadedLeaderboardIds(new Set());
       } else {
         setLoadingMore(true);
       }
@@ -124,7 +107,7 @@ export default function Component() {
         .from("leaderboard")
         .select("*")
         .order("count", { ascending: false })
-        .order("id", { ascending: true }) // Secondary sort for consistent ordering
+        .order("id", { ascending: true })
         .range(offset, offset + ITEMS_PER_PAGE - 1);
 
       if (error) {
@@ -135,7 +118,6 @@ export default function Component() {
       const newData = data || [];
 
       if (append) {
-        // Deduplicate and append new data
         const deduplicatedData = deduplicateData(
           leaderboardData,
           newData,
@@ -143,7 +125,6 @@ export default function Component() {
         );
         setLeaderboardData(deduplicatedData);
 
-        // Update loaded IDs
         const newIds = new Set([
           ...loadedLeaderboardIds,
           ...newData.map((item) => item.userid),
@@ -151,17 +132,13 @@ export default function Component() {
         setLoadedLeaderboardIds(newIds);
       } else {
         setLeaderboardData(newData);
-        // Set last updated from first entry
         if (newData.length > 0) {
           setLastUpdated(newData[0].updated_at);
         }
-
-        // Initialize loaded IDs
         const newIds = new Set(newData.map((item) => item.userid));
         setLoadedLeaderboardIds(newIds);
       }
 
-      // Check if there's more data
       setLeaderboardHasMore(newData.length === ITEMS_PER_PAGE);
       setLeaderboardPage(page);
     } catch (error) {
@@ -172,12 +149,11 @@ export default function Component() {
     }
   }
 
-  // Fetch current members data with pagination
   async function fetchCurrentMembersData(page = 0, append = false) {
     try {
       if (page === 0 && !append) {
         setLoading(true);
-        setLoadedCurrentMemberIds(new Set()); // Reset loaded IDs when starting fresh
+        setLoadedCurrentMemberIds(new Set());
       } else {
         setLoadingMore(true);
       }
@@ -187,7 +163,7 @@ export default function Component() {
         .from("current_members")
         .select("*")
         .order("count", { ascending: false })
-        .order("id", { ascending: true }) // Secondary sort for consistent ordering
+        .order("id", { ascending: true })
         .range(offset, offset + ITEMS_PER_PAGE - 1);
 
       if (error) {
@@ -198,7 +174,6 @@ export default function Component() {
       const newData = data || [];
 
       if (append) {
-        // Deduplicate and append new data
         const deduplicatedData = deduplicateData(
           currentMembersData,
           newData,
@@ -206,7 +181,6 @@ export default function Component() {
         );
         setCurrentMembersData(deduplicatedData);
 
-        // Update loaded IDs
         const newIds = new Set([
           ...loadedCurrentMemberIds,
           ...newData.map((item) => item.userid),
@@ -214,28 +188,23 @@ export default function Component() {
         setLoadedCurrentMemberIds(newIds);
       } else {
         setCurrentMembersData(newData);
-        // Set last updated from first entry if leaderboard data is empty
         if (newData.length > 0 && !lastUpdated) {
           setLastUpdated(newData[0].updated_at);
         }
-
-        // Initialize loaded IDs
         const newIds = new Set(newData.map((item) => item.userid));
         setLoadedCurrentMemberIds(newIds);
       }
 
-      // Check if there's more data
       setCurrentMembersHasMore(newData.length === ITEMS_PER_PAGE);
       setCurrentMembersPage(page);
     } catch (error) {
-      console.error("Error fetching current members data:", error);
+      console.error("Error fetching current members:", error);
     } finally {
       setLoading(false);
       setLoadingMore(false);
     }
   }
 
-  // Load more data for infinite scroll
   async function loadMoreData() {
     if (loadingMore) return;
 
@@ -250,28 +219,11 @@ export default function Component() {
     }
   }
 
-  // Initial data fetch
-  useEffect(() => {
-    async function initializeData() {
-      const totalCountValue = await fetchStats();
-      setTotalCount(totalCountValue);
-
-      // Load both datasets initially
-      await Promise.all([
-        fetchLeaderboardData(0, false),
-        fetchCurrentMembersData(0, false),
-      ]);
-    }
-
-    initializeData();
-  }, []);
-
-  // Infinite scroll handler
   useEffect(() => {
     const handleScroll = () => {
       if (
         window.innerHeight + document.documentElement.scrollTop >=
-        document.documentElement.offsetHeight - 1000 // Trigger 1000px before bottom
+        document.documentElement.offsetHeight - 1000
       ) {
         loadMoreData();
       }
@@ -288,32 +240,17 @@ export default function Component() {
     currentMembersPage,
   ]);
 
-  // Handle view toggle
   const handleToggleView = (showCurrent: boolean) => {
     setShowCurrentMembers(showCurrent);
-    // Scroll to top when switching views
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Get current display data and pagination state
   const displayData = showCurrentMembers ? currentMembersData : leaderboardData;
   const hasMore = showCurrentMembers
     ? currentMembersHasMore
     : leaderboardHasMore;
 
-  // Format last updated date
-  let lastUpdatedDisplay = "";
-  if (lastUpdated) {
-    try {
-      const date = new Date(lastUpdated);
-      lastUpdatedDisplay = date.toLocaleString();
-    } catch {
-      lastUpdatedDisplay = lastUpdated;
-    }
-  }
-
   function openInstagramLink(appUrl: string, webUrl: string) {
-    // Try to open the Instagram app
     try {
       window.location.href = appUrl;
     } catch (error) {
@@ -335,14 +272,11 @@ export default function Component() {
 
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
-      {/* Cyber background effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black opacity-50" />
       <div className="absolute inset-0 simpcity-radial-bg" />
 
       <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
-        {/* Navbar */}
         <div className="flex flex-row justify-between items-center bg-black/60 backdrop-blur-md rounded-2xl px-4 py-3 mb-6 shadow-lg border border-[#222]">
-          {/* Logo with gradient border */}
           <div className="inline-block w-40 items-center rounded-full">
             <img
               src="/simpcity_logo.jpg?height=80&width=200"
@@ -353,7 +287,6 @@ export default function Component() {
           <span className="hidden sm:block w-40 text-2xl text-center font-bold simpcity-gradient-text">
             SimpCity
           </span>
-          {/* CTA Button */}
           <button
             type="button"
             onClick={() =>
@@ -373,29 +306,26 @@ export default function Component() {
           </button>
         </div>
 
-        {/* Total Messages */}
         <div className="text-center mb-6">
           <span className="inline-block px-4 py-2 rounded-full bg-black/70 border border-[#ff6600] simpcity-gradient-text font-bold text-lg sm:text-xl tracking-wide">
-            Total Messages: {totalCount.toLocaleString()}
+            Total Messages: {totalCount.toLocaleString("en-US")}
           </span>
         </div>
 
-        {/* Not realtime note */}
         <div className="text-center mb-8">
           <span className="text-sm text-gray-400">
             Leaderboard is updated once per day. Results are not realtime.
-            {lastUpdatedDisplay && (
+            {lastUpdated && (
               <>
                 <br />
                 <span className="text-xs text-gray-500">
-                  Last updated: {lastUpdatedDisplay}
+                  Last updated: {new Date(lastUpdated).toLocaleString("en-IN")}
                 </span>
               </>
             )}
           </span>
         </div>
 
-        {/* Toggle Buttons for Current Members / All Time */}
         <div className="flex justify-center gap-4 mb-6">
           <button
             className={`px-4 py-2 rounded-full font-bold transition ${
@@ -419,14 +349,11 @@ export default function Component() {
           </button>
         </div>
 
-        {/* Leaderboard */}
         <div className="space-y-4 mb-32">
           {displayData.map((user, index) => {
             const { level, currentLevelXP, nextLevelXP, progress } =
               calculateLevel(user.count);
-            // Calculate position based on current view
             const position = index + 1;
-            // Create unique key using view type, userid, and index
             const uniqueKey = `${showCurrentMembers ? "current" : "all"}-${
               user.userid
             }-${index}`;
@@ -439,21 +366,17 @@ export default function Component() {
                 >
                   <CardContent className="p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-col gap-3 sm:gap-4">
-                      {/* Mobile: Top row with rank, profile, and basic info */}
                       <div className="flex items-center gap-3 sm:gap-4">
-                        {/* Rank */}
                         <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-gray-800 to-gray-700 border-2 border-gray-600 flex-shrink-0">
                           <span className="text-lg sm:text-xl font-bold text-white">
                             #{position}
                           </span>
                         </div>
 
-                        {/* Rank Icon */}
                         <div className="flex-shrink-0 hidden sm:block">
                           {getRankIcon(position)}
                         </div>
 
-                        {/* Profile Picture */}
                         <div className="relative flex-shrink-0">
                           <img
                             src={user.profilepic || "/placeholder.svg"}
@@ -465,7 +388,6 @@ export default function Component() {
                           </div>
                         </div>
 
-                        {/* User Info - Mobile optimized */}
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                             <a
@@ -497,9 +419,8 @@ export default function Component() {
                             </div>
                           </div>
                           <p className="text-[#ff4da6] font-semibold text-sm sm:text-base">
-                            XP: {user.count.toLocaleString()}
+                            XP: {user.count.toLocaleString("en-US")}
                           </p>
-                          {/* XP Progress Bar - Full width on mobile */}
                           <div className="w-full sm:flex-shrink-0">
                             <div className="relative">
                               <div className="w-full bg-gray-700 rounded-full h-2 sm:h-3 overflow-hidden">
@@ -526,7 +447,6 @@ export default function Component() {
           })}
         </div>
 
-        {/* Loading indicator for infinite scroll */}
         {loadingMore && (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#ff6600]"></div>
@@ -536,7 +456,6 @@ export default function Component() {
           </div>
         )}
 
-        {/* End of data indicator */}
         {!hasMore && !loading && displayData.length > 0 && (
           <div className="text-center py-8">
             <span className="text-gray-400 font-semibold">
@@ -545,7 +464,6 @@ export default function Component() {
           </div>
         )}
 
-        {/* No data message */}
         {displayData.length === 0 && !loading && (
           <div className="text-center py-12">
             <p className="text-gray-400 text-lg">No data available</p>
