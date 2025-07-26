@@ -345,7 +345,7 @@ export default function Component() {
           {/* Logo with gradient border */}
           <div className="inline-block w-40 items-center rounded-full">
             <img
-              src="/simpcity_logo.jpg?height=80&width=200"
+              src="/simpcity-logo.png?height=80&width=200"
               alt="SimpCity Logo"
               className="h-16 w-auto rounded-full bg-black p-[1px] simpcity-gradient"
             />

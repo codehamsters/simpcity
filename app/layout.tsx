@@ -10,7 +10,7 @@ const structuredData = {
   url: "https://simpcity.vercel.app",
   description:
     "A friendly community leaderboard showcasing members of SimpCity, a welcoming group for friendly environment.",
-  image: "https://simpcity.vercel.app/simpcity_logo.jpg",
+  image: "https://simpcity.vercel.app/simpcity-logo.png",
   sameAs: ["https://instagram.com/simpcity.gc"],
 };
 
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     siteName: "SimpCity Leaderboard",
     images: [
       {
-        url: "https://simpcity.vercel.app/simpcity_logo.jpg",
+        url: "https://simpcity.vercel.app/simpcity-logo.png",
         width: 1200,
         height: 630,
         alt: "SimpCity Leaderboard",
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     description: "Leaderboard of Members of SimpCity - A friendly group",
     images: [
       {
-        url: "https://simpcity.vercel.app/simpcity_logo.jpg",
+        url: "https://simpcity.vercel.app/simpcity-logo.png",
         width: 1200,
         height: 630,
         alt: "SimpCity Leaderboard",

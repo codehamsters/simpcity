@@ -279,7 +279,7 @@ export default function LeaderboardClient({
         <div className="flex flex-row justify-between items-center bg-black/60 backdrop-blur-md rounded-2xl px-4 py-3 mb-6 shadow-lg border border-[#222]">
           <div className="inline-block w-40 items-center rounded-full">
             <img
-              src="/simpcity_logo.jpg?height=80&width=200"
+              src="/simpcity-logo.png?height=80&width=200"
               alt="SimpCity Logo"
               className="h-16 w-auto rounded-full bg-black p-[1px] simpcity-gradient"
             />
