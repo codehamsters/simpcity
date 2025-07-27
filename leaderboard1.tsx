@@ -135,20 +135,18 @@ export default function Component() {
       const newData = data || [];
 
       if (append) {
-        // Deduplicate and append new data
-        const deduplicatedData = deduplicateData(
-          leaderboardData,
-          newData,
-          loadedLeaderboardIds
+        // Deduplicate and append new data using functional updates
+        setLeaderboardData((prevData) =>
+          deduplicateData(prevData, newData, loadedLeaderboardIds)
         );
-        setLeaderboardData(deduplicatedData);
 
-        // Update loaded IDs
-        const newIds = new Set([
-          ...loadedLeaderboardIds,
-          ...newData.map((item) => item.userid),
-        ]);
-        setLoadedLeaderboardIds(newIds);
+        setLoadedLeaderboardIds((prevIds) => {
+          const newIds = new Set([
+            ...prevIds,
+            ...newData.map((item) => item.userid),
+          ]);
+          return newIds;
+        });
       } else {
         setLeaderboardData(newData);
         // Set last updated from first entry
@@ -198,20 +196,18 @@ export default function Component() {
       const newData = data || [];
 
       if (append) {
-        // Deduplicate and append new data
-        const deduplicatedData = deduplicateData(
-          currentMembersData,
-          newData,
-          loadedCurrentMemberIds
+        // Deduplicate and append new data using functional updates
+        setCurrentMembersData((prevData) =>
+          deduplicateData(prevData, newData, loadedCurrentMemberIds)
         );
-        setCurrentMembersData(deduplicatedData);
 
-        // Update loaded IDs
-        const newIds = new Set([
-          ...loadedCurrentMemberIds,
-          ...newData.map((item) => item.userid),
-        ]);
-        setLoadedCurrentMemberIds(newIds);
+        setLoadedCurrentMemberIds((prevIds) => {
+          const newIds = new Set([
+            ...prevIds,
+            ...newData.map((item) => item.userid),
+          ]);
+          return newIds;
+        });
       } else {
         setCurrentMembersData(newData);
         // Set last updated from first entry if leaderboard data is empty
