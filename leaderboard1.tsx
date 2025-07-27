@@ -53,7 +53,7 @@ export default function Component() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const [showCurrentMembers, setShowCurrentMembers] = useState(false);
+  const [showCurrentMembers, setShowCurrentMembers] = useState(true);
 
   // Separate pagination states for each view
   const [leaderboardPage, setLeaderboardPage] = useState(0);
