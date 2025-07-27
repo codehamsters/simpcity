@@ -259,6 +259,92 @@ export default function LeaderboardClient({
     window.open(webUrl, "_blank");
   }
 
+  useEffect(() => {
+    // Subscribe to real-time updates for leaderboard table
+    const leaderboardSubscription = supabase
+      .channel("public:leaderboard")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "leaderboard" },
+        (payload) => {
+          const newRecord = payload.new as LeaderboardEntry;
+          setLeaderboardData((prevData) => {
+            const index = prevData.findIndex(
+              (item) => item.userid === newRecord.userid
+            );
+            if (index !== -1) {
+              // Update existing record
+              const updatedData = [...prevData];
+              updatedData[index] = newRecord;
+              return updatedData;
+            } else {
+              // Add new record
+              return [newRecord, ...prevData];
+            }
+          });
+          if (newRecord.updated_at > (lastUpdated ?? "")) {
+            setLastUpdated(newRecord.updated_at);
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to real-time updates for current_members table
+    const currentMembersSubscription = supabase
+      .channel("public:current_members")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "current_members" },
+        (payload) => {
+          const newRecord = payload.new as CurrentMember;
+          setCurrentMembersData((prevData) => {
+            const index = prevData.findIndex(
+              (item) => item.userid === newRecord.userid
+            );
+            if (index !== -1) {
+              // Update existing record
+              const updatedData = [...prevData];
+              updatedData[index] = newRecord;
+              return updatedData;
+            } else {
+              // Add new record
+              return [newRecord, ...prevData];
+            }
+          });
+          if (newRecord.updated_at > (lastUpdated ?? "")) {
+            setLastUpdated(newRecord.updated_at);
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to real-time updates for stats table (total_count)
+    const statsSubscription = supabase
+      .channel("public:stats")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "stats",
+          filter: "key=eq.total_count",
+        },
+        (payload) => {
+          const newRecord = payload.new as { key: string; value: number };
+          if (newRecord.key === "total_count") {
+            setTotalCount(newRecord.value);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(leaderboardSubscription);
+      supabase.removeChannel(currentMembersSubscription);
+      supabase.removeChannel(statsSubscription);
+    };
+  }, [lastUpdated]);
+
   if (loading && displayData.length === 0) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
