@@ -1,5 +1,6 @@
-import LeaderboardServer from "@/components/leaderboard-server";
+// import LeaderboardServer from "@/components/leaderboard-server";
+import Component from "@/leaderboard1";
 
 export default function Page() {
-  return <LeaderboardServer />;
+  return <Component />;
 }
